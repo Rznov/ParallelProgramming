@@ -1,39 +1,53 @@
 #include <iostream>
+#include <chrono>
 #include "Matrix.cpp"
 #include "Multiplication.cpp"
 
 using namespace std;
 
-int main() {
+double execute(int rows, int columns, int type) {
 
-    int rows = 0;
-    int columns = 0;
-    cout<<"Enter matrix size:"<<endl<<"rows:";
-    cin>>rows;
-    cout<<"columns:";
-    cin>>columns;
     auto A = new Matrix(rows, columns);
     auto B = new Matrix(rows,columns);
     A->fillRandom();
     B->fillRandom();
 
-    auto serialMultiplication = new Multiplication(A, B);
-    auto staticMultiplication = new ParallelForStaticScheduleMultiplication(A, B);
-    auto dynamicMultiplication = new ParallelForDynamicScheduleMultiplication(A, B);
-    auto guidedMultiplication = new ParallelForGuidedScheduleMultiplication(A, B);
+    Multiplication * multiplication;
+    switch (type) {
+        case 0:
+            multiplication = new Multiplication(A, B);
+            break;
+        case 1:
+            multiplication = new ParallelForStaticScheduleMultiplication(A, B);
+            break;
+        case 2:
+            multiplication = new ParallelForDynamicScheduleMultiplication(A, B);
+            break;
+        case 3:
+            multiplication = new ParallelForGuidedScheduleMultiplication(A,B);
+            break;
+    }
 
-    serialMultiplication->multiply()->writeToFile();
-    staticMultiplication->multiply()->writeToFile();
-    dynamicMultiplication->multiply()->writeToFile();
-    guidedMultiplication->multiply()->writeToFile();
+    auto start = std::chrono::high_resolution_clock::now();
+    multiplication->multiply();
+    auto finish = std::chrono::high_resolution_clock::now();
+    auto duration = std::chrono::duration<double>(finish - start).count();
+    return duration;
+}
 
-//    A->writeToConsole();
-//    B->writeToConsole();
+int main() {
+    int rows = 500;
+    int columns = 500;
+    int type = 1;
+    int executeCount = 100;
+    double averageTime = 0;
 
-    cout<<"Serial multiplication time:"<<difftime(serialMultiplication->finish_time, serialMultiplication->start_time)<<endl;
-//    cout<<"Parallel multiplication with static schedule time:"<<difftime(staticMultiplication->finish_time, staticMultiplication->start_time)<<endl;
-//    cout<<"Parallel multiplication with dynamic schedule time:"<<difftime(dynamicMultiplication->finish_time, dynamicMultiplication->start_time)<<endl;
-//    cout<<"Parallel multiplication with guided schedule time:"<<difftime(guidedMultiplication->finish_time, guidedMultiplication->start_time)<<endl;
+    for (int i = 0; i < executeCount; ++i) {
+        averageTime += execute(rows, columns, type);
+    }
+
+    averageTime = averageTime / executeCount;
+    cout << averageTime;
 
     return 0;
 }

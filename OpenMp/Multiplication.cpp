@@ -1,23 +1,21 @@
+#pragma once
+
 #include "Matrix.cpp"
 
 class Multiplication {
 public:
     Matrix *a;
     Matrix *b;
-    time_t start_time = 0;
-    time_t finish_time = 0;
 
     Multiplication(Matrix *a, Matrix *b) : a(a), b(b) {}
 
     virtual Matrix * multiply() {
-        time(&start_time);
         auto result = new Matrix(a->rows, b->columns);
         for (int i = 0; i < result->rows; ++i) {
             for (int j = 0; j < result->columns; ++j) {
                 result->values[i][j] = getElement(i, j);
             }
         }
-        time(&finish_time);
         return result;
     }
 
@@ -41,14 +39,12 @@ public:
         int tasks = rows * columns;
         auto result = new Matrix(a->rows, b->columns);
 
-        time(&start_time);
 #pragma omp parallel for schedule(static)
         for (int task = 0; task < tasks; ++task) {
             int row = task / columns;
             int column = task % columns;
             result->values[row][column] = getElement(row, column);
         }
-        time(&finish_time);
         return result;
     }
 };
@@ -63,14 +59,12 @@ public:
         int tasks = rows * columns;
         auto result = new Matrix(a->rows, b->columns);
 
-        time(&start_time);
 #pragma omp parallel for schedule(dynamic)
         for (int task = 0; task < tasks; ++task) {
             int row = task / columns;
             int column = task % columns;
             result->values[row][column] = getElement(row, column);
         }
-        time(&finish_time);
         return result;
     }
 };
@@ -85,14 +79,12 @@ public:
         int tasks = rows * columns;
         auto * result = new Matrix(a->rows, b->columns);
 
-        time(&start_time);
 #pragma omp parallel for schedule(guided)
         for (int task = 0; task < tasks; ++task) {
             int row = task / columns;
             int column = task % columns;
             result->values[row][column] = getElement(row, column);
         }
-        time(&finish_time);
         return result;
     }
 };
