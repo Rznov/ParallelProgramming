@@ -10,26 +10,21 @@ class Matrix {
 public:
     size_t rows;
     size_t columns;
-    int ** values;
+    double * values;
 
     Matrix() : Matrix(0, 0) {}
 
     Matrix(size_t rows, size_t columns) : rows(rows), columns(columns) {
-        values = new int * [rows];
-        values[0] = new int [rows * columns];
-        for (size_t i = 1; i != rows; ++i) {
-            values[i] = new int[columns];
-        }
+        values = new double [rows * columns];
     }
 
     Matrix(string filename) {
         ifstream file(filename);
         file >> rows >> columns;
-        values = new int * [rows];
-        values[0] = new int [rows * columns];
-        for (size_t i = 0; i != rows; ++i) {
-            for (size_t j = 0; j != columns; ++j) {
-                file >> values[i][j];
+        values = new double [rows * columns];
+        for (size_t i = 0; i < rows; ++i) {
+            for (size_t j = 0; j < columns; ++j) {
+                file >> values[i * rows + j];
             }
         }
         file.close();
@@ -41,7 +36,24 @@ public:
         }
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
-                values[i][j] = rand() % 10;
+                values[i * rows + j] = rand() % 3 + 1;
+            }
+        }
+        return true;
+    }
+
+    bool fillLinearSystem() {
+        if (rows == 0) {
+            return false;
+        }
+        srand(time(0));
+        for (size_t i = 0; i != rows; ++i) {
+            for (size_t j = 0; j != columns; ++j) {
+                if (i == j) {
+                    values[i * rows + j] = 3 * columns + rand() % (5 * columns - 3 * columns);
+                } else {
+                    values[i * rows + j] = rand() % 3;
+                }
             }
         }
         return true;
@@ -57,7 +69,7 @@ public:
         file << rows << " " << columns << endl;
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
-                file << values[i][j] << " ";
+                file << values[i * rows + j] << " ";
             }
             file << endl;
         }
@@ -69,14 +81,13 @@ public:
         cout << rows << " " << columns << endl;
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
-                cout << values[i][j] << " ";
+                cout << values[i * rows + j] << " ";
             }
             cout << endl;
         }
     }
 
     ~Matrix() {
-        delete [] values[0];
         delete [] values;
     }
 };
