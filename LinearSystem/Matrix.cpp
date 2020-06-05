@@ -10,12 +10,16 @@ class Matrix {
 public:
     size_t rows;
     size_t columns;
-    double * values;
+    double *values;
+    string filename;
 
     Matrix() : Matrix(0, 0) {}
 
     Matrix(size_t rows, size_t columns) : rows(rows), columns(columns) {
         values = new double [rows * columns];
+        string name = "Matrix";
+        string localFilename = name + to_string(rows) + "by" + to_string(columns) + ".txt";
+        filename = localFilename;
     }
 
     Matrix(string filename) {
@@ -46,7 +50,6 @@ public:
         if (rows == 0) {
             return false;
         }
-        srand(time(0));
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
                 if (i == j) {
@@ -63,8 +66,6 @@ public:
         if (rows == 0) {
             return false;
         }
-        string name = "Matrix";
-        string filename = name + to_string(rows) + "by" + to_string(columns) + ".txt";
         ofstream file(filename);
         file << rows << " " << columns << endl;
         for (size_t i = 0; i != rows; ++i) {
