@@ -73,21 +73,20 @@ public:
         }
         //works till here
 
-//        do {
+        do {
             for (int x = start; x <= finish; ++finish) {
-                //log(to_string(x));
-                saveCurrentXAsPrevious();
+                saveX();
                 //log(toString(previousX, size));
                 computeX(x);
-//                log(to_string(currentX[x]));
-//                log(to_string(previousX[x]));
+                log(to_string(currentX[x]));
+                log(to_string(previousX[x]));
                 break;
                 localError += abs(previousX[x] - currentX[x]);
             }
-//            MPI_Allreduce(&localError, &globalError, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-//            MPI_Allgatherv(currentX, finish - size, MPI_DOUBLE, previousX, vectorSize, displacements, MPI_DOUBLE, MPI_COMM_WORLD);
-        //}
-//        while (globalError > error);
+            MPI_Allreduce(&localError, &globalError, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
+            MPI_Allgatherv(currentX, finish - size, MPI_DOUBLE, previousX, vectorSize, displacements, MPI_DOUBLE, MPI_COMM_WORLD);
+        }
+        while (globalError > error);
 
         return previousX;
     }
@@ -122,7 +121,7 @@ private:
         estimFile.close();
     }
 
-    void saveCurrentXAsPrevious() {
+    void saveX() {
         if (previousX == nullptr) {
             previousX = new double[size];
         }
