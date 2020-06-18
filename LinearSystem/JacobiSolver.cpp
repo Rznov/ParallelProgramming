@@ -6,10 +6,11 @@
 using namespace std;
 
 class JacobiSolver {
-private:
+public:
     const int main_process = 0;
     int processId, processesNum;
 
+private:
     int size;
     double *coefficients;
     double *b;
@@ -23,11 +24,17 @@ public:
         MPI_Comm_size(MPI_COMM_WORLD, &processesNum);
     }
 
+    ~JacobiSolver() {
+        delete[] coefficients;
+        delete[] b;
+        delete[] currentX;
+        delete[] previousX;
+    }
+
     double *solve(string coefficientsFilename, string estimateFilename, double error) {
 
         int *vectorSize, *displacements;
         double localError = 0, globalError = 0;
-        bool fillEnds = false;
 
         vectorSize = new int[processesNum];
         displacements = new int[processesNum];
@@ -51,6 +58,7 @@ public:
         MPI_Bcast(coefficients, size * size, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
         MPI_Bcast(currentX, size, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
         MPI_Bcast(b, size, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
+        saveX();
 
         if (processId == main_process) {
             int shift = 0, countX;
@@ -71,20 +79,18 @@ public:
         } else {
             finish = displacements[processId + 1] - 1;
         }
-        //works till here
 
         do {
-            for (int x = start; x <= finish; ++finish) {
-                saveX();
-                //log(toString(previousX, size));
+            localError = 0;
+            if (processId == main_process) {
+                globalError = 0;
+            }
+            for (int x = start; x <= finish; ++x) {
                 computeX(x);
-                log(to_string(currentX[x]));
-                log(to_string(previousX[x]));
-                break;
-                localError += abs(previousX[x] - currentX[x]);
+                localError += abs(currentX[x] - previousX[x]);
             }
             MPI_Allreduce(&localError, &globalError, 1, MPI_DOUBLE, MPI_SUM, MPI_COMM_WORLD);
-            MPI_Allgatherv(currentX, finish - size, MPI_DOUBLE, previousX, vectorSize, displacements, MPI_DOUBLE, MPI_COMM_WORLD);
+            MPI_Allgatherv(&currentX[start], vectorSize[processId], MPI_DOUBLE, previousX, vectorSize, displacements, MPI_DOUBLE, MPI_COMM_WORLD);
         }
         while (globalError > error);
 
@@ -104,10 +110,9 @@ private:
             for (size_t j = 0; j < columns; ++j) {
                 if (j == columns - 1) {
                     coefFile >> b[i];
-                    b[i] *= -1;
                     continue;
                 }
-                coefFile >> coefficients[i * rows + j];
+                coefFile >> coefficients[i * (columns - 1) + j];
             }
         }
         coefFile.close();
@@ -135,14 +140,13 @@ private:
         for (size_t i = 0; i < size; ++i) {
             for (size_t j = 0; j < size; ++j) {
                 if (i != j) {
-                    sum += coefficients[i * size + j];
+                    sum += abs(coefficients[i * size + j]);
                 }
             }
-        }
-        for (size_t i = 0; i < size; ++i) {
-            if (coefficients[i * (size + 1)] < sum) {
+            if (sum > coefficients[i * size + i]) {
                 return false;
             }
+            sum = 0;
         }
         return true;
     }
@@ -151,67 +155,14 @@ private:
         double sum = 0;
         double divisor = coefficients[row * size + row];
 
-        for (size_t j = 0; j < size; ++size) {
-            double coef = coefficients[row * size + j];
-
-            if (coef == divisor) {
+        for (size_t j = 0; j < size; ++j) {
+            double coefficient = coefficients[row * size + j];
+            if (coefficient == divisor) {
                 continue;
             }
-            sum += coef * previousX[j];
+            sum += coefficient * previousX[j];
         }
-
+        sum = b[row] - sum;
         currentX[row] = sum / divisor;
-    }
-
-    void resultToConsole(double *result) {
-        for (int i = 0; i < size - 1; ++size) {
-            cout << result[i] << endl;
-        }
-    }
-
-    void log(const string &message) {
-        ofstream stream("ls." + to_string(processId) + "-" + to_string(processesNum) + ".log", ios_base::app);
-        stream << time(nullptr) << " - " << message << endl;
-        stream.close();
-    }
-
-    static string toString(double *array, int size) {
-        string contentString;
-        if (size < 20) {
-            for (int i = 0; i < size; i++) {
-                contentString += to_string(array[i]);
-                if (i < size - 1) contentString += " ";
-            }
-        } else {
-            for (int i = 0; i < 5; i++) {
-                contentString += to_string(array[i]) + " ";
-            }
-            contentString += " ... ";
-            for (int i = size - 5; i < size; i++) {
-                contentString += to_string(array[i]);
-                if (i < size - 1) contentString += " ";
-            }
-        }
-        return "|" + to_string(size) + "|[" + contentString + "]";
-    }
-
-    static string toString(int *array, int size) {
-        string contentString;
-        if (size < 20) {
-            for (int i = 0; i < size; i++) {
-                contentString += to_string(array[i]);
-                if (i < size - 1) contentString += " ";
-            }
-        } else {
-            for (int i = 0; i < 5; i++) {
-                contentString += to_string(array[i]) + " ";
-            }
-            contentString += " ... ";
-            for (int i = size - 5; i < size; i++) {
-                contentString += to_string(array[i]);
-                if (i < size - 1) contentString += " ";
-            }
-        }
-        return "|" + to_string(size) + "|[" + contentString + "]";
     }
 };

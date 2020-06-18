@@ -28,7 +28,7 @@ public:
         values = new double [rows * columns];
         for (size_t i = 0; i < rows; ++i) {
             for (size_t j = 0; j < columns; ++j) {
-                file >> values[i * rows + j];
+                file >> values[i * columns + j];
             }
         }
         file.close();
@@ -40,7 +40,7 @@ public:
         }
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
-                values[i * rows + j] = rand() % 3 + 1;
+                values[i * columns + j] = rand() % 3 + 1;
             }
         }
         return true;
@@ -53,9 +53,9 @@ public:
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
                 if (i == j) {
-                    values[i * rows + j] = 3 * columns + rand() % (5 * columns - 3 * columns);
+                    values[i * columns + j] = 3 * columns + rand() % (5 * columns - 3 * columns);
                 } else {
-                    values[i * rows + j] = rand() % 3;
+                    values[i * columns + j] = rand() % 3;
                 }
             }
         }
@@ -70,7 +70,7 @@ public:
         file << rows << " " << columns << endl;
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
-                file << values[i * rows + j] << " ";
+                file << values[i * columns + j] << " ";
             }
             file << endl;
         }
@@ -82,7 +82,7 @@ public:
         cout << rows << " " << columns << endl;
         for (size_t i = 0; i != rows; ++i) {
             for (size_t j = 0; j != columns; ++j) {
-                cout << values[i * rows + j] << " ";
+                cout << values[i * columns + j] << " ";
             }
             cout << endl;
         }
