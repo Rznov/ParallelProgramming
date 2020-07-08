@@ -1,11 +1,10 @@
 #pragma once
 
-#include <limits>
 #include "Graph.cpp"
 
 using namespace std;
 
-const int INFINITE = numeric_limits<int>::max();
+const int INFINITE = 10000;
 
 class Dijkstra {
 public:
@@ -16,7 +15,7 @@ public:
     int source;
     int n;
 
-    Dijkstra(Graph *graph, int source, int n) : graph(graph), source(source), n(n) {
+    Dijkstra(Graph *graph, int source) : graph(graph), source(source), n(graph->vertexes) {
         visited = new bool[n];
         distance = new int[n];
         for (int i = 0; i < n; ++i) {
@@ -25,21 +24,28 @@ public:
         }
     }
 
-    void performSerial() {
+    int *performSerial() {
         visited[source] = true;
+        distance[source] = 0;
         for (int vertex = 0; vertex < graph->vertexes; ++vertex) {
             if (vertex == source) {
                 continue;
             }
             distance[vertex] = graph->getDistance(source, vertex);
         }
-        for (int i = 0; i < graph->vertexes - 2; ++i) {
+        for (int i = 0; i < graph->vertexes - 1; ++i) {
             int currentVertex = findMinDistance();
             visited[currentVertex] = true;
+            #pragma omp parallel for schedule(static)
             for (int vertex = 0; vertex < graph->vertexes; ++vertex) {
+                if (visited[vertex]) {
+                    continue;
+                }
                 distance[vertex] = min(distance[vertex], distance[currentVertex] + graph->getDistance(currentVertex, vertex));
             }
         }
+        log(toString(distance, n));
+        return distance;
     }
 
 private:
@@ -56,5 +62,33 @@ private:
             }
         }
         return minVertex;
+    }
+
+    void log(const string &message) {
+        ofstream stream(
+                "qs." + to_string(1) + "-" + to_string(2) + ".log",
+                ios_base::app);
+        stream << time(nullptr) << " - " << message << endl;
+        stream.close();
+    }
+
+    static string toString(int *array, int size) {
+        string contentString;
+        if (size < 20) {
+            for (int i = 0; i < size; i++) {
+                contentString += to_string(array[i]);
+                if (i < size - 1) contentString += " ";
+            }
+        } else {
+            for (int i = 0; i < 5; i++) {
+                contentString += to_string(array[i]) + " ";
+            }
+            contentString += " ... ";
+            for (int i = size - 5; i < size; i++) {
+                contentString += to_string(array[i]);
+                if (i < size - 1) contentString += " ";
+            }
+        }
+        return "|" + to_string(size) + "|[" + contentString + "]";
     }
 };
