@@ -22,11 +22,11 @@ int main() {
     int size = 10;
     int type = 0;
 
-    int executeCount = 100;
+    int executeCount = 10;
     double averageTime = 0;
 
     for (int i = 0; i < executeCount; ++i) {
-        averageTime += execute(size, type);
+        averageTime += execute(type, size);
     }
 
     averageTime = averageTime / executeCount;

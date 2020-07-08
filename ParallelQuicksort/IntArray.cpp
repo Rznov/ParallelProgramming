@@ -108,7 +108,7 @@ public:
             return false;
         }
         for (int i = 0; i < size; ++i) {
-            values[i] = rand() % 30;
+            values[i] = rand() % 100;
         }
         return true;
     }

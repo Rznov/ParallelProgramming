@@ -22,17 +22,13 @@ public:
         currentGroup = globalGroup;
         if (globalGroup->processId == MAIN_PROCESS) {
             readInputs(arrayFilename);
-            log(processArray->toString());
         }
     }
 
     void sort() {
-        log("_______________________________________");
-
         sendParts(globalGroup);
         processArray = recvArray(currentGroup, MAIN_PROCESS);
         while(true) {
-            log(to_string(currentGroup->processesNum));
 
             if (currentGroup->processesNum == 1) {
                 quickSort(processArray->values, 0, processArray->size - 1);
@@ -41,8 +37,6 @@ public:
 
             sendPivot(currentGroup);
             quickSort(processArray->values, 0, processArray->size - 1);
-            log("pivot = " + to_string(pivot));
-            log("Sorted process array" + toString(processArray->values, processArray->size));
             exchangeParts(currentGroup);
             separateProcess(currentGroup);
         }
@@ -78,7 +72,6 @@ private:
                     result = new IntArray(result, array);
                 }
             }
-            log("Result collected: " + result->toString());
             return result;
         }
         return nullptr;
@@ -103,14 +96,11 @@ private:
     void exchangeParts(ProcessGroup *group) {
         IntArray *leftPart, *rightPart;
         int neighbour = group->getNeighbour();
-        log("Send to process " + to_string(neighbour));
 
         processArray->separate(pivot, &leftPart, &rightPart);
-        log("left part array" + leftPart->toString());
-        log("right part array" + rightPart->toString());
 
         bool isRight = group->isRight();
-        log("is right = " + to_string(isRight));
+
         if (isRight) {
             sendArray(leftPart, neighbour, group->communicator);
         } else {
@@ -118,13 +108,11 @@ private:
         }
 
         auto receivedArray = recvArray(group, neighbour);
-        log("received Array = " + toString(receivedArray->values, receivedArray->size));
         if (isRight) {
             processArray = new IntArray(rightPart, receivedArray);
         } else {
             processArray = new IntArray(leftPart, receivedArray);
         }
-        log(toString(processArray->values, processArray->size));
     }
 
     void separateProcess(ProcessGroup *group) {
@@ -188,33 +176,5 @@ private:
             quickSort(arr, low, pi - 1);
             quickSort(arr, pi + 1, high);
         }
-    }
-
-    void log(const string &message) {
-        ofstream stream(
-                "qs." + to_string(globalGroup->processId) + "-" + to_string(globalGroup->processesNum) + ".log",
-                ios_base::app);
-        stream << time(nullptr) << " - " << message << endl;
-        stream.close();
-    }
-
-    static string toString(int *array, int size) {
-        string contentString;
-        if (size < 20) {
-            for (int i = 0; i < size; i++) {
-                contentString += to_string(array[i]);
-                if (i < size - 1) contentString += " ";
-            }
-        } else {
-            for (int i = 0; i < 5; i++) {
-                contentString += to_string(array[i]) + " ";
-            }
-            contentString += " ... ";
-            for (int i = size - 5; i < size; i++) {
-                contentString += to_string(array[i]);
-                if (i < size - 1) contentString += " ";
-            }
-        }
-        return "|" + to_string(size) + "|[" + contentString + "]";
     }
 };

@@ -12,7 +12,6 @@ public:
 
     int *graph;
     int vertexes; // vertexes
-    int edges; // edges
 
     string filename;
 
@@ -24,7 +23,7 @@ public:
         writeToFile();
     }
 
-    Graph(string filename) {
+    Graph(const string& filename) {
         ifstream file(filename);
         file >> vertexes;
         graph = new int [vertexes * vertexes];
@@ -52,12 +51,12 @@ public:
         return true;
     }
 
-    int getDistance(int source, int vertex) {
+    int getDistance(int source, int vertex) const {
         return graph[source * vertexes + vertex];
     }
 
 private:
-    void fill() {
+    void fill() const {
         if (vertexes > 0) {
             for (int i = 0; i < vertexes; ++i) {
                 for (int j = 0; j < vertexes; ++j) {
