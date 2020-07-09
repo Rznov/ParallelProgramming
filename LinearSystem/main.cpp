@@ -38,7 +38,7 @@ double solveSystem(int size) {
 
 int main() {
 
-    int size = 10000;
+    int size = 10;
     int iterations = 10;
     double averageTime = 0;
     MPI_Init(nullptr, nullptr);

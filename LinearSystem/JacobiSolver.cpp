@@ -46,31 +46,38 @@ public:
             }
         }
 
-        MPI_Bcast(&size, 1, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
+        MPI_Bcast(&size, 1, MPI_INT, main_process, MPI_COMM_WORLD);
         previousX = new double [size];
-
-        if (processId != main_process) {
-            coefficients = new double [size * size];
-            currentX = new double [size];
-            b = new double [size];
-        }
-
-        MPI_Bcast(coefficients, size * size, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
-        MPI_Bcast(currentX, size, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
-        MPI_Bcast(b, size, MPI_DOUBLE, main_process, MPI_COMM_WORLD);
-        saveX();
 
         if (processId == main_process) {
             int shift = 0, countX;
             for (int proc = 0; proc < processesNum; ++proc) {
-                countX = size / processesNum + (size % processesNum > proc ? 1 : 0);
+                countX = size / processesNum + (size % processesNum > proc);
                 vectorSize[proc] = countX;
                 displacements[proc] = shift;
+                if (proc != main_process) {
+                    MPI_Send(&coefficients[shift * size], countX * size, MPI_DOUBLE, proc, 0, MPI_COMM_WORLD);
+                    MPI_Send(&b[shift], countX, MPI_DOUBLE, proc, 0, MPI_COMM_WORLD);
+                }
                 shift += countX;
             }
         }
+
         MPI_Bcast(vectorSize, processesNum, MPI_INT, 0, MPI_COMM_WORLD);
         MPI_Bcast(displacements, processesNum, MPI_INT, 0, MPI_COMM_WORLD);
+
+        if (processId != main_process) {
+            currentX = new double [size];
+
+            MPI_Status status;
+            int localSize = vectorSize[processId];
+            coefficients = new double[size * localSize];
+            MPI_Recv(coefficients, size * localSize, MPI_DOUBLE, main_process, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+
+            b = new double[localSize];
+            MPI_Recv(b, localSize, MPI_DOUBLE, main_process, MPI_ANY_TAG, MPI_COMM_WORLD, &status);
+        }
+        saveX();
 
         int start, finish;
         start = displacements[processId];
@@ -164,5 +171,31 @@ private:
         }
         sum = b[row] - sum;
         currentX[row] = sum / divisor;
+    }
+
+    void log(const string &message) {
+        ofstream stream("ls." + to_string(processId) + "-" + to_string(processesNum) + ".log", ios_base::app);
+        stream << time(nullptr) << " - " << message << endl;
+        stream.close();
+    }
+
+    static string toString(double *array, int size) {
+        string contentString;
+        if (size < 20) {
+            for (int i = 0; i < size; i++) {
+                contentString += to_string(array[i]);
+                if (i < size - 1) contentString += " ";
+            }
+        } else {
+            for (int i = 0; i < 5; i++) {
+                contentString += to_string(array[i]) + " ";
+            }
+            contentString += " ... ";
+            for (int i = size - 5; i < size; i++) {
+                contentString += to_string(array[i]);
+                if (i < size - 1) contentString += " ";
+            }
+        }
+        return "|" + to_string(size) + "|[" + contentString + "]";
     }
 };
