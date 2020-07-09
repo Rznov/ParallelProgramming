@@ -12,10 +12,7 @@ void timeToFile(double time) {
 int main() {
 
     MPI_Init(nullptr, nullptr);
-    int size = 1e5;
-    //1e5 1e6 3e6 5e6 7e6 1e7
-    //0.126033 9.23021 79.8305 228.095 446.691 905.069
-    //0.159476
+    int size = 1e7;
 
     auto globalArray = new IntArray(size);
     auto sort = Quicksort(globalArray->filename);
