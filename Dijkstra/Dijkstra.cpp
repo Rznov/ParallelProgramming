@@ -88,6 +88,7 @@ private:
 
     int findMinDistance() const {
         int minDistance = INFINITE, minVertex;
+#pragma omp parallel for schedule(static) default(shared)
         for (int vertex = 0; vertex < graph->vertexes; ++vertex) {
             if (visited[vertex]) {
                 continue;
